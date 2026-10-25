@@ -281,7 +281,7 @@ def run_bot():
     application.add_handler(CallbackQueryHandler(buy_callback, pattern="^buy_p_"))
     application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
-
+application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
     application.run_polling()
 
 if __name__ == '__main__':
