@@ -37,7 +37,7 @@ def save_db(db):
 db = load_db()
 
 # ----------------- إعداد خادم Flask (التطبيق المصغر) -----------------
-app = Flask(_name_, template_folder=".")
+app = Flask(__name__, template_folder=".")
 
 @app.route('/')
 def index():
