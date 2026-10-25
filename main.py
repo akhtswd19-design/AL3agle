@@ -252,7 +252,7 @@ def run_bot():
     
     application.run_polling()
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.daemon = True
     flask_thread.start()
