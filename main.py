@@ -254,13 +254,17 @@ def main():
     application.add_handler(CallbackQueryHandler(admin_callback, pattern="^(stats|manage_reviews|del_rev_.|del_prod_list|del_prod_.)$"))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
 
-    # تشغيل خادم Flask في الخلفية ليعمل المتجر 24 ساعة
+    # تشغيل خادم Flask في الخلفية
     flask_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=10000, debug=False, use_reloader=False))
     flask_thread.daemon = True
     flask_thread.start()
 
+    # ضبط حلقة الأحداث لمنع أخطاء الـ MainThread
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     # تشغيل البوت
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
-if __name__ == '__main__':
+if _name_ == '_main_':
     main()
