@@ -267,7 +267,7 @@ def run_bot():
 
     application.run_polling()
 
-if _name_ == '_main_':
+if _name_ == '__main__':
     # تشغيل خادم الـ Flask في الخلفية ليبقى المتجر المصغر شغّالاً 24 ساعة
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.daemon = True
