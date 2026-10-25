@@ -19,7 +19,7 @@ from telegram.ext import (
 )
 import requests
 
-TOKEN = "8622474758:AAHWc5L3EP2_BLqy0WC5kOflOyOOVMXkMEc"
+TOKEN = "8362438919:AAGbgmqVBN0eKZRvGwcaJOnt6pzME-SSuAU"
 ADMIN_ID = 1056007305
 
 app = Flask(__name__)
