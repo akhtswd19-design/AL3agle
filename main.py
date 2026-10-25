@@ -24,7 +24,7 @@ import requests
 TOKEN = "8622474758:AAFcIwB0EOHK1luEnYig6yxE4ZxmbU0XOxo"
 ADMIN_ID = 1056007305
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 # قاعدة بيانات مبسطة مؤقتة (يمكن استبدالها بقاعدة بيانات حقيقية لاحقاً)
 db = {
