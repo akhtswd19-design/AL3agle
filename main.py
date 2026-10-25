@@ -217,7 +217,7 @@ async def buy_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             title=title,
             description=description,
             payload=f"product_{product['id']}",
-            currency="XTR",  عملة النجوم في تليجرام
+            currency="XTR", # عملة النجوم في تليجرام
             prices=prices
         )
 
