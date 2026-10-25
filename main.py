@@ -1,12 +1,10 @@
 import os
-import asyncio
 import threading
 from flask import Flask, render_template, request, jsonify
 from telegram import (
     Update, 
     InlineKeyboardButton, 
     InlineKeyboardMarkup, 
-    LabeledPrice,
     SuccessfulPayment
 )
 from telegram.ext import (
@@ -20,34 +18,33 @@ from telegram.ext import (
 )
 import requests
 
-# إعدادات البوت
 TOKEN = "8622474758:AAFcIwB0EOHK1luEnYig6yxE4ZxmbU0XOxo"
 ADMIN_ID = 1056007305
 
-app = Flask(__name__)
+app = Flask(_name_)
 
-# قاعدة بيانات مبسطة مؤقتة (يمكن استبدالها بقاعدة بيانات حقيقية لاحقاً)
+# قاعدة بيانات مؤقتة للمتجر
 db = {
     "products": [
         {
             "id": 1,
-            "title": "ملف عسكري",
-            "description": "ملف عسكري شامل ومطور",
+            "title": "ملف عسكري شامل",
+            "description": "ملف عسكري مطور ومتكامل لجميع القطاعات",
             "price_sar": 10,
-            "stars": 115,  # سعر تقريبي بالنجمات بناء على 10 ريال
+            "stars": 115,
             "image_url": "https://images.unsplash.com/photo-1508614589041-895b88991e3e?q=80&w=600",
             "group_link": "https://t.me/+example_group_link"
         }
     ],
     "reviews": [
-        {"name": "سلطان الحربي", "text": "متجر ممتاز جداً والملفات دقيقة"},
-        {"name": "نايف القحطاني", "text": "شكراً على سرعة الخدمة"}
+        {"name": "سلطان الحربي", "text": "متجر ممتاز جداً والملفات دقيقة ومفيدة"},
+        {"name": "نايف القحطاني", "text": "شكراً على سرعة الخدمة وتسليم الرابط فوراً"}
     ],
     "users": set([ADMIN_ID]),
     "orders_count": 0
 }
 
-# حالات المحادثة للأدمن
+# حالات المحادثة للأدمن لإضافة/تعديل المنتجات
 TITLE, PRICE, DESC, PHOTO, GROUP_LINK = range(5)
 
 @app.route('/')
@@ -84,11 +81,7 @@ def create_invoice_route():
         return jsonify({"invoice_link": response["result"]})
     return jsonify({"error": "Failed to create invoice"}), 400
 
-# تشغيل خادم Flask في الخلفية
-def run_flask():
-    app.run(host='0.0.0.0', port=10000, debug=False, use_reloader=False)
-
-# أوامر البوت
+# أوامر البوت الأساسية
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     db["users"].add(user.id)
@@ -100,7 +93,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     welcome_text = (
         f"أهلاً بك يا {user.first_name} في 🎖️ متجر العاقل للملفات العسكرية.\n\n"
-        "اضغط على الزر بالأسفل لفتح المتجر المصغر واستعراض الملفات والتقييمات بكل سلاسة وفخامة!"
+        "اضغط على الزر بالأسفل لفتح المتجر المصغر واستعراض الملفات بكل سلاسة وفخامة!"
     )
     await update.message.reply_text(welcome_text, reply_markup=reply_markup, parse_mode="Markdown")
 
@@ -109,16 +102,16 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     keyboard = [
-        [InlineKeyboardButton("➕ إضافة منتج", callback_data="add_prod")],
-        [InlineKeyboardButton("📋 حذف/إدارة المنتجات", callback_data="del_prod_list")],
+        [InlineKeyboardButton("➕ إضافة منتج جديد", callback_data="add_prod")],
+        [InlineKeyboardButton("📋 إدارة وحذف المنتجات", callback_data="del_prod_list")],
+        [InlineKeyboardButton("⭐ إدارة وحذف التقييمات", callback_data="manage_reviews")],
         [InlineKeyboardButton("📊 إحصائيات الطلبات", callback_data="stats")],
-        [InlineKeyboardButton("⭐ إدارة التقييمات", callback_data="manage_reviews")],
-        [InlineKeyboardButton("📢 رسالة جماعية", callback_data="broadcast")]
+        [InlineKeyboardButton("📢 إرسال رسالة جماعية", callback_data="broadcast_start")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("🎛️ لوحة تحكم الأدمن لمتجر العاقل:", reply_markup=reply_markup, parse_mode="Markdown")
 
-# إضافة منتج (ConversationHandler)
+# خطوات إضافة المنتج للأدمن
 async def add_product_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -127,13 +120,13 @@ async def add_product_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['title'] = update.message.text
-    await update.message.reply_text("أدخل سعر المنتج بالريال السعودي (مثال: 15):")
+    await update.message.reply_text("أدخل سعر المنتج بالريال السعودي (سيتم حسابه بالنجوم تلقائياً):")
     return PRICE
 
 async def get_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         price_sar = float(update.message.text)
-        # حساب النجوم تلقائياً (نفترض كل ريال يعادل تقريباً 11.5 نجمة أو حسب معادلتك)
+        # حساب النجوم تلقائياً بناءً على السعر بالريال (مثلاً كل ريال = 11.5 نجمة تقريباً)
         stars = int(price_sar * 11.5)
         context.user_data['price_sar'] = price_sar
         context.user_data['stars'] = stars
@@ -150,8 +143,9 @@ async def get_desc(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     photo_file = await update.message.photo[-1].get_file()
-    context.user_data['image_url'] = photo_file.file_path
-    await update.message.reply_text("أدخل رابط القروب الخاص بالملفات (الذي سيحصل عليه المشتري تلقائياً):")
+    # حفظ رابط الصورة المباشر من تليجرام
+    context.user_data['image_url'] = f"https://api.telegram.org/file/bot{TOKEN}/{photo_file.file_path}"
+    await update.message.reply_text("أدخل رابط القروب الخاص بالملفات (الذي سيحصل عليه العميل فور الدفع):")
     return GROUP_LINK
 
 async def get_group_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -170,7 +164,7 @@ async def get_group_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     db["products"].append(new_product)
     
-    # إرسال إشعار رسالة جماعية للزبائن بالمنتج الجديد
+    # إرسال رسالة جماعية لكل الزبائن فور إضافة المنتج
     for uid in db["users"]:
         try:
             await context.bot.send_message(
@@ -181,10 +175,10 @@ async def get_group_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             pass
 
-    await update.message.reply_text("✅ تم إضافة المنتج بنجاح وإرساله كرسالة جماعية للزبائن!")
+    await update.message.reply_text("✅ تم إضافة المنتج بنجاح وإرساله كرسالة جماعية لجميع الزبائن!")
     return ConversationHandler.END
 
-# إدارة الحذف والإحصائيات والتقييمات
+# إدارة الحذف والإحصائيات
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -193,24 +187,34 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "stats":
         stats_text = (
             f"📊 إحصائيات متجر العاقل:\n\n"
-            f"- إجمالي الطلبات: {db['orders_count']}\n"
+            f"- إجمالي الطلبات الناجحة: {db['orders_count']}\n"
             f"- عدد الزبائن المسجلين: {len(db['users'])}\n"
-            f"- عدد المنتجات: {len(db['products'])}"
+            f"- عدد المنتجات الحالية: {len(db['products'])}"
         )
         await query.message.reply_text(stats_text, parse_mode="Markdown")
     
     elif data == "manage_reviews":
         keyboard = []
         for i, rev in enumerate(db["reviews"]):
-            keyboard.append([InlineKeyboardButton(f"❌ حذف تقييم: {rev['name']}", callback_data=f"del_rev_{i}")])
-        keyboard.append([InlineKeyboardButton("🔙 رجوع", callback_data="admin_home")])
+            keyboard.append([InlineKeyboardButton(f"❌ حذف: {rev['name']}", callback_data=f"del_rev_{i}")])
         await query.message.reply_text("اختر التقييم المراد حذفه:", reply_markup=InlineKeyboardMarkup(keyboard))
     
     elif data.startswith("del_rev_"):
         idx = int(data.split("_")[2])
         if idx < len(db["reviews"]):
             removed = db["reviews"].pop(idx)
-            await query.message.reply_text(f"🗑️ تم حذف تقييم: {removed['name']}")
+            await query.message.reply_text(f"🗑️ تم حذف تقييم العميل: {removed['name']}")
+
+    elif data == "del_prod_list":
+        keyboard = []
+        for p in db["products"]:
+            keyboard.append([InlineKeyboardButton(f"🗑️ حذف منتج: {p['title']}", callback_data=f"del_prod_{p['id']}")])
+        await query.message.reply_text("اختر المنتج المراد حذفه:", reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif data.startswith("del_prod_"):
+        pid = int(data.split("_")[2])
+        db["products"] = [p for p in db["products"] if p["id"] != pid]
+        await query.message.reply_text("✅ تم حذف المنتج بنجاح.")
 
 async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     payment: SuccessfulPayment = update.message.successful_payment
@@ -222,14 +226,14 @@ async def successful_payment_callback(update: Update, context: ContextTypes.DEFA
         product = next((p for p in db["products"] if p["id"] == pid), None)
         if product:
             success_text = (
-                f"🎉 تم عملية الشراء بنجاح!\n\n"
+                f"🎉 تمت عملية الشراء بنجاح!\n\n"
                 f"شكراً لثقتك بمتجر العاقل.\n"
                 f"📦 المنتج: {product['title']}\n\n"
                 f"🔗 رابط القروب الخاص بالملفات العسكرية:\n{product['group_link']}"
             )
             await update.message.reply_text(success_text, parse_mode="Markdown")
 
-def run_bot():
+def main():
     application = Application.builder().token(TOKEN).build()
     
     add_prod_handler = ConversationHandler(
@@ -247,14 +251,16 @@ def run_bot():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("admin", admin_panel))
     application.add_handler(add_prod_handler)
-    application.add_handler(CallbackQueryHandler(admin_callback, pattern="^(stats|manage_reviews|del_rev_.*)$"))
+    application.add_handler(CallbackQueryHandler(admin_callback, pattern="^(stats|manage_reviews|del_rev_.|del_prod_list|del_prod_.)$"))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
-    
-    application.run_polling()
 
-if __name__ == '__main__':
-    flask_thread = threading.Thread(target=run_flask)
+    # تشغيل خادم Flask في الخلفية ليعمل المتجر 24 ساعة
+    flask_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=10000, debug=False, use_reloader=False))
     flask_thread.daemon = True
     flask_thread.start()
-    
-    run_bot()
+
+    # تشغيل البوت
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+if _name_ == '_main_':
+    main()
