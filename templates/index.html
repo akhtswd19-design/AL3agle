@@ -2,344 +2,193 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>متجر العاقل</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0b0e14;
-            --card-bg: rgba(22, 28, 38, 0.7);
-            --accent-gold: #ffd700;
-            --accent-glow: rgba(255, 215, 0, 0.25);
-            --text-color: #ffffff;
-            --text-muted: #8e9aaf;
-            --btn-blue: #3182ce;
+            --bg-color: #0b0f19;
+            --card-bg: #131c2e;
+            --accent-glow: #3b82f6;
+            --gold: #f59e0b;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Tajawal', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            overflow-x: hidden;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        /* خلفية الإضاءة والتوهج */
-        .glow-bg {
-            position: fixed;
-            top: -20%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 350px;
-            height: 350px;
-            background: radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* شاشة الترحيب (4 ثوان) */
+        /* شاشة الترحيب (4 ثواني) */
         #splash-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.8s ease, visibility 0.8s;
+            position: fixed; inset: 0; background: var(--bg-color);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999; animation: fadeOut 0.8s ease 3.2s forwards;
         }
-
-        .splash-title {
-            font-size: 2.2rem;
-            font-weight: 900;
-            color: var(--accent-gold);
-            text-shadow: 0 0 20px var(--accent-glow);
-            animation: pulse 2s infinite alternate;
+        #splash-screen h1 {
+            font-size: 2.2rem; color: var(--gold); text-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+            animation: pulseGlow 1.5s infinite alternate;
         }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            100% { transform: scale(1.05); opacity: 1; }
+        @keyframes pulseGlow {
+            0% { transform: scale(1); text-shadow: 0 0 10px rgba(245,158,11,0.4); }
+            100% { transform: scale(1.05); text-shadow: 0 0 25px rgba(245,158,11,0.9); }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
         }
 
         /* المحتوى الرئيسي */
-        .app-container {
-            flex: 1;
-            padding: 20px 16px 90px 16px;
-            z-index: 1;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
+        .container { flex: 1; padding: 20px; padding-bottom: 90px; max-width: 600px; margin: 0 auto; width: 100%; }
+        .header-title { text-align: center; margin-bottom: 25px; font-size: 1.5rem; color: var(--gold); text-shadow: 0 0 10px rgba(245,158,11,0.3); }
 
-        .page {
-            display: none;
-            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: smoothFade 0.4s ease; }
+        @keyframes smoothFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        .page.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .header-title {
-            text-align: center;
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-
-        /* كروت المنتجات */
+        /* بطاقات المنتجات بإضاءات فاخرة */
         .product-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 18px;
-            padding: 16px;
-            margin-bottom: 16px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            background: var(--card-bg); border-radius: 16px; overflow: hidden; margin-bottom: 20px;
+            border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-
-        .product-card:active {
-            transform: scale(0.98);
-        }
-
-        .product-img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 12px;
-            margin-bottom: 12px;
-        }
-
-        .product-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .product-desc {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-            line-height: 1.4;
-        }
-
-        .price-tag {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 8px 12px;
-            border-radius: 10px;
-            margin-bottom: 12px;
-        }
-
-        .star-price {
-            color: var(--accent-gold);
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+        .product-card:hover { transform: translateY(-3px); box-shadow: 0 0 30px rgba(59, 130, 246, 0.3); }
+        .product-img { width: 100%; height: 200px; object-fit: cover; }
+        .product-info { padding: 18px; }
+        .product-title { font-size: 1.2rem; margin-bottom: 8px; color: #fff; }
+        .product-desc { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px; line-height: 1.5; }
+        .product-footer { display: flex; justify-content: space-between; align-items: center; }
+        .price-tag { font-size: 0.95rem; color: var(--gold); font-weight: bold; }
 
         .buy-btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #ffd700, #ffa500);
-            color: #000;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-            transition: opacity 0.2s;
+            background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none;
+            padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); transition: transform 0.2s;
         }
+        .buy-btn:active { transform: scale(0.95); }
 
-        /* كروت التقييمات */
+        /* التقييمات */
         .review-card {
-            background: var(--card-bg);
-            border-radius: 14px;
-            padding: 14px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 12px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
         }
+        .review-name { font-weight: bold; color: var(--gold); margin-bottom: 5px; }
+        .review-text { font-size: 0.9rem; color: var(--text-muted); }
 
-        .review-user {
-            font-weight: 700;
-            color: var(--accent-gold);
-            margin-bottom: 4px;
-            font-size: 0.95rem;
-        }
-
-        /* شريط التنقل السفي (Bottom Navigation) */
+        /* شريط التنقل السفلي الفاخر */
         .nav-bar {
-            position: fixed;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            background: rgba(20, 25, 35, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 30px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 8px 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            position: fixed; bottom: 0; left: 0; right: 0; background: rgba(19, 28, 46, 0.95);
+            backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-around; padding: 12px 0; z-index: 1000;
         }
-
         .nav-item {
-            flex: 1;
-            text-align: center;
-            padding: 8px 0;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.8rem;
-            border-radius: 20px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
+            background: none; border: none; color: var(--text-muted); font-size: 0.9rem;
+            display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: color 0.3s;
         }
-
-        .nav-item.active {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.12);
-        }
-
-        .nav-icon {
-            font-size: 1.2rem;
-        }
+        .nav-item.active { color: var(--gold); text-shadow: 0 0 10px rgba(245,158,11,0.5); }
+        .nav-item span { font-size: 1.3rem; margin-bottom: 3px; }
     </style>
 </head>
 <body>
 
-    <div class="glow-bg"></div>
-
-    <!-- شاشة الترحيب مدتها 4 ثوان -->
+    <!-- شاشة الترحيب لمدة 4 ثواني -->
     <div id="splash-screen">
-        <div class="splash-title">متجر العاقل</div>
+        <h1>متجر العاقل</h1>
     </div>
 
-    <!-- المحتوى -->
-    <div class="app-container" id="main-content">
+    <div class="container">
         <!-- صفحة المنتجات -->
-        <div id="products-page" class="page active">
-            <h2 class="header-title">الملفات العسكرية</h2>
-            <div id="products-list"></div>
+        <div id="products-tab" class="tab-content active">
+            <h2 class="header-title">🎖️ الملفات العسكرية</h2>
+            <div id="products-list">جاري تحميل المنتجات...</div>
         </div>
 
         <!-- صفحة التقييمات -->
-        <div id="reviews-page" class="page">
-            <h2 class="header-title">تقييمات العملاء</h2>
-            <div id="reviews-list"></div>
+        <div id="reviews-tab" class="tab-content">
+            <h2 class="header-title">⭐ تقييمات العملاء</h2>
+            <div id="reviews-list">جاري تحميل التقييمات...</div>
         </div>
     </div>
 
-    <!-- شريط التنقل السفلي -->
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('products', this)">
-            <span class="nav-icon">📁</span>
-            <span>المنتجات</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('reviews', this)">
-            <span class="nav-icon">⭐</span>
-            <span>التقييمات</span>
-        </div>
-    </div>
+    <!-- شريط التنقل -->
+    <nav class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('products', this)">
+            <span>📁</span> المنتجات
+        </button>
+        <button class="nav-item" onclick="switchTab('reviews', this)">
+            <span>⭐</span> التقييمات
+        </button>
+    </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // إخفاء الشاشة الترحيبية بعد 4 ثوانٍ
-        setTimeout(() => {
-            const splash = document.getElementById('splash-screen');
-            const mainContent = document.getElementById('main-content');
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.style.display = 'none';
-                mainContent.style.opacity = '1';
-            }, 800);
-        }, 4000);
-
-        // التنقل السلس بين الصفحات
-        function switchTab(pageName, element) {
+        function switchTab(tabName, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
 
-            element.classList.add('active');
-            document.getElementById(pageName + '-page').classList.add('active');
+            if(tabName === 'products') {
+                document.getElementById('products-tab').classList.add('active');
+            } else if(tabName === 'reviews') {
+                document.getElementById('reviews-tab').classList.add('active');
+            }
+            btn.classList.add('active');
         }
 
-        // جلب المنتجات والتقييمات من السيرفر
-        async function loadData() {
-            try {
-                const res = await fetch('/api/store-data');
-                const data = await res.json();
-                
+        // جلب البيانات وعرضها
+        fetch('/api/store-data')
+            .then(res => res.json())
+            .then(data => {
                 // عرض المنتجات
-                const productsContainer = document.getElementById('products-list');
-                productsContainer.innerHTML = '';
+                const prodContainer = document.getElementById('products-list');
+                prodContainer.innerHTML = '';
                 data.products.forEach(p => {
-                    productsContainer.innerHTML += `
+                    prodContainer.innerHTML += `
                         <div class="product-card">
                             <img src="${p.image_url}" class="product-img" alt="${p.title}">
-                            <div class="product-title">${p.title}</div>
-                            <div class="product-desc">${p.description}</div>
-                            <div class="price-tag">
-                                <span>السعر: ${p.price_sar} ر.س</span>
-                                <span class="star-price">★ ${p.stars} نجمة</span>
+                            <div class="product-info">
+                                <h3 class="product-title">${p.title}</h3>
+                                <p class="product-desc">${p.description}</p>
+                                <div class="product-footer">
+                                    <span class="price-tag">السعر: ${p.price_sar} ر.س (⭐ ${p.stars} نجمة)</span>
+                                    <button class="buy-btn" onclick="buyProduct(${p.id})">شراء الآن</button>
+                                </div>
                             </div>
-                            <button class="buy-btn" onclick="buyProduct(${p.id})">شراء الآن (★ ${p.stars})</button>
                         </div>
                     `;
                 });
 
                 // عرض التقييمات
-                const reviewsContainer = document.getElementById('reviews-list');
-                reviewsContainer.innerHTML = '';
+                const revContainer = document.getElementById('reviews-list');
+                revContainer.innerHTML = '';
                 data.reviews.forEach(r => {
-                    reviewsContainer.innerHTML += `
+                    revContainer.innerHTML += `
                         <div class="review-card">
-                            <div class="review-user">${r.user_name}</div>
-                            <div>${'⭐'.repeat(r.rating)}</div>
-                            <p style="margin-top:6px; font-size:0.9rem; color:#ccc;">${r.comment}</p>
+                            <div class="review-name">${r.name}</div>
+                            <div class="review-text">${r.text}</div>
                         </div>
                     `;
                 });
-            } catch (e) {
-                console.error("Error loading store data", e);
-            }
-        }
+            });
 
+        // دفع النجوم الفوري داخل المتجر المصغر دون مغادرته
         function buyProduct(productId) {
-            tg.sendData(JSON.stringify({ action: 'buy', product_id: productId }));
+            fetch('/create-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.invoice_link) {
+                    tg.openInvoice(data.invoice_link, function(status) {
+                        if (status === 'paid') {
+                            alert('تم الدفع بنجاح! سيتم إرسال رابط الملفات لك.');
+                        }
+                    });
+                } else {
+                    alert('تعذر إنشاء الفاتورة.');
+                }
+            });
         }
-
-        loadData();
     </script>
 </body>
 </html>
