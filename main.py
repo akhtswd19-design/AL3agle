@@ -198,6 +198,23 @@ async def get_group_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # --- الدفع بنجوم تليجرام ---
+async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    data = update.effective_message.web_app_data.data
+    if data.startswith("buy_"):
+        pid = int(data.split("_")[1])
+        product = next((p for p in db["products"] if p["id"] == pid), None)
+        if product:
+            title = f"شراء: {product['title']}"
+            description = product['description']
+            prices = [LabeledPrice(label="نجوم تليجرام", amount=product['stars'])]
+            await context.bot.send_invoice(
+                chat_id=update.effective_user.id,
+                title=title,
+                description=description,
+                payload=f"product_{product['id']}",
+                currency="XTR",
+                prices=prices
+            )
 async def buy_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
