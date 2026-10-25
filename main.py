@@ -10,7 +10,7 @@ from telegram.ext import (
 )
 
 # ----------------- الإعدادات والتوكن -----------------
-TOKEN = "8622474758:AAFcIwB0EOHK1luEnYig6yxE4ZxmbU0XOxo"
+TOKEN = "8622474758:AAHPkZfX0QU27SDIZqtNhhZWGQGvY2Qut9I"
 ADMIN_ID = 1056007305
 SAR_TO_STARS_RATE = 11.5  # معامل التحويل التلقائي للريال إلى نجوم تليجرام
 
